@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Sign Up</title>
+</head>
+
+<body>
+  <h2>Sign Up</h2>
+  <input type="text" id="nick" placeholder="Nick" required />
+  <input type="password" id="password" placeholder="Password" required />
+  <button id="signupBtn">Sign Up</button>
+  <p id="authMessage"></p>
+  <p>Already have an account? <a href="signin.html">Sign In</a></p>
+
+  <script>
+    document.getElementById('signupBtn').onclick = async () => {
+      const nick = document.getElementById('nick').value;
+      const password = document.getElementById('password').value;
+
+      const res = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nick, password })
+      });
+
+      const data = await res.json();
+      document.getElementById('authMessage').textContent = data.message;
+
+      if (data.success) {
+        window.location.href = "signin.html";
+      }
+    };
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Messenger</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+
+    #messages {
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 200px;
+      overflow-y: scroll;
+    }
+
+    button {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Messenger</h2>
+  <div id="messages"></div>
+  <input type="text" id="input" placeholder="Type a message">
+  <button id="sendBtn">Send</button>
+  <button id="helloBtn">Hello</button>
+  <p><a href="signin.html">Log out</a></p>
+
+  <script>
+    const ws = new WebSocket(`ws://${location.host}/ws`);
+    const messagesDiv = document.getElementById('messages');
+    const input = document.getElementById('input');
+
+    ws.onmessage = (event) => {
+      const msg = document.createElement('div');
+      msg.textContent = event.data;
+      messagesDiv.appendChild(msg);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    };
+
+    document.getElementById('sendBtn').onclick = () => {
+      if (input.value) {
+        ws.send(input.value);
+        input.value = '';
+      }
+    };
+
+    document.getElementById('helloBtn').onclick = () => {
+      ws.send("Hello!");
+    };
+  </script>
+</body>
+
+</html>
