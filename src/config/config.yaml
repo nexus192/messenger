@@ -1,0 +1,8 @@
+env: "local"
+storage_path: "./storage/storage.db"
+database_url: "postgres://mess_user:lalala@localhost:5432/mess?sslmode=disable"
+
+http_server:
+  address: "192.168.0.22:8080"
+  timeout: 4s
+  idle_timeout: 60s
