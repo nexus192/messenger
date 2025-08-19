@@ -1,0 +1,12 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    nick VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE history (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users (id),
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
