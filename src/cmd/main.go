@@ -3,6 +3,7 @@ package main
 import (
 	"log/slog"
 	"messenger/src/config"
+	"messenger/src/internal/adapter"
 	"messenger/src/internal/data/repository"
 	"messenger/src/internal/domain/service"
 	"messenger/src/internal/server"
@@ -30,11 +31,13 @@ func main() {
 
 	h := service.NewHub()
 
-	auth := service.AuthService{Repo: repo}
+	adaRepo := &adapter.PostgresAdapter{Repo: repo}
 
-	chat := service.ChatService{Repo: repo, Hub: h}
+	auth := service.NewAuthService(adaRepo)
 
-	s := server.NewServer(h, &auth, &chat, log)
+	chat := service.NewChatService(adaRepo, h)
+
+	s := server.NewServer(h, auth, chat, log)
 
 	go h.Run()
 	s.Start()

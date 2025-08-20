@@ -1,15 +1,15 @@
 package service
 
 import (
-	"messenger/src/internal/data/repository"
+	"messenger/src/internal/domain/repository"
 )
 
 type ChatService struct {
-	Repo *repository.PostgresRepo
+	Repo repository.Repository
 	Hub  *Hub
 }
 
-func NewChatService(repo *repository.PostgresRepo, hub *Hub) *ChatService {
+func NewChatService(repo repository.Repository, hub *Hub) *ChatService {
 	return &ChatService{Repo: repo, Hub: hub}
 }
 

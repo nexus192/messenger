@@ -2,14 +2,14 @@ package service
 
 import (
 	"context"
-	"messenger/src/internal/data/repository"
+	"messenger/src/internal/domain/repository"
 )
 
 type AuthService struct {
-	Repo *repository.PostgresRepo
+	Repo repository.Repository
 }
 
-func NewAuthService(repo *repository.PostgresRepo) *AuthService {
+func NewAuthService(repo repository.Repository) *AuthService {
 	return &AuthService{Repo: repo}
 }
 

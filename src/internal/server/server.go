@@ -87,3 +87,27 @@ func (s *Server) Start() {
 	fmt.Printf("Server started at %d\n", port)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
+
+func (s *Server) HandleLogout(w http.ResponseWriter, r *http.Request) {
+	// Затираем куку с нулевым временем жизни
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_id",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   -1, // удалить
+	})
+
+	http.Redirect(w, r, "/signin.html", http.StatusSeeOther)
+}
+
+func (s *Server) AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("session_id")
+		if err != nil || cookie.Value == "" {
+			http.Redirect(w, r, "/signin.html", http.StatusSeeOther)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}

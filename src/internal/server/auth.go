@@ -67,26 +67,26 @@ func (s *Server) HandleSignIn(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(APIResponse{Success: true, Message: "login success"})
 }
 
-func (s *Server) HandleLogout(w http.ResponseWriter, r *http.Request) {
-	// Затираем куку с нулевым временем жизни
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
-		Value:    "",
-		Path:     "/",
-		HttpOnly: true,
-		MaxAge:   -1, // удалить
-	})
+// func (s *Server) HandleLogout(w http.ResponseWriter, r *http.Request) {
+// 	// Затираем куку с нулевым временем жизни
+// 	http.SetCookie(w, &http.Cookie{
+// 		Name:     "session_id",
+// 		Value:    "",
+// 		Path:     "/",
+// 		HttpOnly: true,
+// 		MaxAge:   -1, // удалить
+// 	})
 
-	http.Redirect(w, r, "/signin.html", http.StatusSeeOther)
-}
+// 	http.Redirect(w, r, "/signin.html", http.StatusSeeOther)
+// }
 
-func (s *Server) AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("session_id")
-		if err != nil || cookie.Value == "" {
-			http.Redirect(w, r, "/signin.html", http.StatusSeeOther)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
+// func (s *Server) AuthMiddleware(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		cookie, err := r.Cookie("session_id")
+// 		if err != nil || cookie.Value == "" {
+// 			http.Redirect(w, r, "/signin.html", http.StatusSeeOther)
+// 			return
+// 		}
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
