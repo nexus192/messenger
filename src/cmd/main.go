@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"messenger/src/config"
 	"messenger/src/internal/data/repository"
-	"messenger/src/internal/hub"
+	"messenger/src/internal/domain/service"
 	"messenger/src/internal/server"
 	"os"
 )
@@ -28,8 +28,13 @@ func main() {
 		return
 	}
 
-	h := hub.NewHub()
-	s := server.NewServer(h, repo, log)
+	h := service.NewHub()
+
+	auth := service.AuthService{Repo: repo}
+
+	chat := service.ChatService{Repo: repo, Hub: h}
+
+	s := server.NewServer(h, &auth, &chat, log)
 
 	go h.Run()
 	s.Start()
