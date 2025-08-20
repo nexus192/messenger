@@ -32,7 +32,9 @@
   <p><a href="/api/logout">Log out</a></p>
 
   <script>
-    const ws = new WebSocket(`ws://${location.host}/ws`);
+    const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
+    const ws = new WebSocket(`${wsProtocol}://${location.host}/ws`);
+
     const messagesDiv = document.getElementById('messages');
     const input = document.getElementById('input');
 

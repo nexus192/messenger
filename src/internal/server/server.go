@@ -96,12 +96,12 @@ func (s *Server) readPump(c *hub.Client) {
 			nick = "unknown"
 		}
 
-		formattedMsg := fmt.Sprintf("%s: %s", nick, string(msg))
-
-		if err := s.repo.SaveMessage(c.UserID, formattedMsg); err != nil {
+		if err := s.repo.SaveMessage(c.UserID, string(msg)); err != nil {
 			s.log.Error("failed to save message", "err", err)
 		}
 
+		// ✅ Ник подставляем только для рассылки
+		formattedMsg := fmt.Sprintf("%s: %s", nick, string(msg))
 		s.hub.Broadcast <- []byte(formattedMsg)
 	}
 }
