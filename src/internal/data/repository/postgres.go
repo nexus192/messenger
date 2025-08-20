@@ -103,3 +103,40 @@ func (r *PostgresRepo) GetHistory(userID int) ([]model.Message, error) {
 
 	return messages, nil
 }
+
+func (r *PostgresRepo) GetLastMessages(limit int) ([]model.Message, error) {
+	rows, err := r.db.Query(`
+        SELECT id, user_id, message, created_at
+        FROM history
+        ORDER BY created_at DESC
+        LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	messages := []model.Message{}
+	for rows.Next() {
+		var msg model.Message
+		if err := rows.Scan(&msg.ID, &msg.UserID, &msg.Content, &msg.CreatedAt); err != nil {
+			return nil, err
+		}
+		messages = append(messages, msg)
+	}
+
+	// переворачиваем, чтобы шли в хронологическом порядке
+	for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
+		messages[i], messages[j] = messages[j], messages[i]
+	}
+
+	return messages, nil
+}
+
+func (r *PostgresRepo) GetNickByID(userID int) (string, error) {
+	var nick string
+	err := r.db.QueryRow("SELECT nick FROM users WHERE id=$1", userID).Scan(&nick)
+	if err != nil {
+		return "", err
+	}
+	return nick, nil
+}

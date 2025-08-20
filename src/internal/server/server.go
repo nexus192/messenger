@@ -3,8 +3,8 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
+	"strconv"
 
 	"messenger/src/internal/data/repository"
 	"messenger/src/internal/hub"
@@ -13,6 +13,11 @@ import (
 
 	"github.com/gorilla/websocket"
 )
+
+type WSMessage struct {
+	Nick    string `json:"nick"`
+	Content string `json:"content"`
+}
 
 type Server struct {
 	hub  *hub.Hub
@@ -31,14 +36,43 @@ var upgrader = websocket.Upgrader{
 }
 
 func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
+	// проверяем куку
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID, err := strconv.Atoi(cookie.Value)
+	if err != nil {
+		http.Error(w, "invalid session", http.StatusUnauthorized)
+		return
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("Upgrade error:", err)
 		return
 	}
 
-	client := &hub.Client{Conn: conn, Send: make(chan []byte, 256)}
+	client := &hub.Client{
+		Conn:   conn,
+		Send:   make(chan []byte, 256),
+		UserID: userID, // добавляем UserID
+	}
 	s.hub.Register <- client
+
+	lastMessages, err := s.repo.GetLastMessages(100)
+	if err != nil {
+		s.log.Error("failed to load last messages", "err", err)
+	} else {
+		for _, msg := range lastMessages {
+			nick, err := s.repo.GetNickByID(msg.UserID)
+			if err != nil {
+				nick = "unknown"
+			}
+			client.Send <- []byte(fmt.Sprintf("%s: %s", nick, msg.Content))
+		}
+	}
 
 	go s.writePump(client)
 	go s.readPump(client)
@@ -55,7 +89,20 @@ func (s *Server) readPump(c *hub.Client) {
 		if err != nil {
 			break
 		}
-		s.hub.Broadcast <- msg
+
+		nick, err := s.repo.GetNickByID(c.UserID)
+		if err != nil {
+			s.log.Error("failed to get user nick", "err", err)
+			nick = "unknown"
+		}
+
+		formattedMsg := fmt.Sprintf("%s: %s", nick, string(msg))
+
+		if err := s.repo.SaveMessage(c.UserID, formattedMsg); err != nil {
+			s.log.Error("failed to save message", "err", err)
+		}
+
+		s.hub.Broadcast <- []byte(formattedMsg)
 	}
 }
 
@@ -67,8 +114,6 @@ func (s *Server) writePump(c *hub.Client) {
 		}
 	}
 }
-
-// ============ NEW API HANDLERS ============
 
 type APIResponse struct {
 	Success bool   `json:"success"`
@@ -122,27 +167,40 @@ func (s *Server) handleSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_id",
+		Value:    fmt.Sprintf("%d", userID),
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   3600,
+	})
+
 	s.log.Info("user signed in", "userID", userID, "nick", req.Nick)
 	json.NewEncoder(w).Encode(APIResponse{Success: true, Message: "Login successful"})
 }
 
-// ==========================================
+func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
+	// Затираем куку с нулевым временем жизни
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_id",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   -1, // удалить
+	})
 
-// utils
-func getLocalIP() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return "unknown"
-	}
+	http.Redirect(w, r, "/signin.html", http.StatusSeeOther)
+}
 
-	for _, addr := range addrs {
-		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
-			}
+func (s *Server) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("session_id")
+		if err != nil || cookie.Value == "" {
+			http.Redirect(w, r, "/signin.html", http.StatusSeeOther)
+			return
 		}
-	}
-	return "unknown"
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (s *Server) Start() {
@@ -153,8 +211,19 @@ func (s *Server) Start() {
 	http.HandleFunc("/api/signup", s.handleSignUp)
 	http.HandleFunc("/api/signin", s.handleSignIn)
 
-	// web (mess.html, signin.html, signup.html)
-	http.Handle("/", http.FileServer(http.Dir("web")))
+	// Файлы
+	fs := http.FileServer(http.Dir("web"))
+
+	// Явно указываем разрешённые "публичные" страницы
+	http.Handle("/signin.html", fs)
+	http.Handle("/signup.html", fs)
+
+	http.HandleFunc("/api/logout", s.handleLogout)
+
+	// Всё остальное защищаем middleware
+	http.Handle("/",
+		s.authMiddleware(fs),
+	)
 
 	port := 8080
 	fmt.Printf("Server started at %d\n", port)
