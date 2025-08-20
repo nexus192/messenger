@@ -6,30 +6,115 @@
   <title>Messenger</title>
   <style>
     body {
-      font-family: sans-serif;
-      margin: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #121212;
+      color: #f1f1f1;
+    }
+
+    .container {
+      width: 1400px;
+      background-color: #1e1e1e;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h2 {
+      margin: 0 0 15px 0;
+      text-align: center;
+      color: #fff;
     }
 
     #messages {
-      border: 1px solid #ccc;
+      flex: 1;
+      background-color: #2a2a2a;
+      border-radius: 8px;
       padding: 10px;
-      height: 200px;
-      overflow-y: scroll;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    #messages div {
+      margin-bottom: 8px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background-color: #333;
+      word-wrap: break-word;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background-color: #2a2a2a;
+      color: #f1f1f1;
+      font-size: 14px;
+    }
+
+    input[type="text"]::placeholder {
+      color: #aaa;
     }
 
     button {
-      margin-top: 10px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      background-color: #6200ea;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #3700b3;
+    }
+
+    .logout {
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    .logout a {
+      color: #bb86fc;
+      text-decoration: none;
+    }
+
+    .logout a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 
 <body>
-  <h2>Messenger</h2>
-  <div id="messages"></div>
-  <input type="text" id="input" placeholder="Type a message">
-  <button id="sendBtn">Send</button>
-  <button id="helloBtn">Hello</button>
-  <p><a href="/api/logout">Log out</a></p>
+  <div class="container">
+    <h2>Messenger</h2>
+    <div id="messages"></div>
+    <div class="input-group">
+      <input type="text" id="input" placeholder="Type a message">
+      <button id="sendBtn">Send</button>
+      <button id="helloBtn">Hello</button>
+    </div>
+    <div class="logout">
+      <a href="/api/logout">Log out</a>
+    </div>
+  </div>
 
   <script>
     const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';

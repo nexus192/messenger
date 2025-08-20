@@ -68,7 +68,6 @@ func (s *Server) HandleSignIn(w http.ResponseWriter, r *http.Request) {
 }
 
 // func (s *Server) HandleLogout(w http.ResponseWriter, r *http.Request) {
-// 	// Затираем куку с нулевым временем жизни
 // 	http.SetCookie(w, &http.Cookie{
 // 		Name:     "session_id",
 // 		Value:    "",

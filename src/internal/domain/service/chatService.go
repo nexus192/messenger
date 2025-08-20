@@ -37,7 +37,6 @@ func (s *ChatService) GetLastMessages(limit int) ([]MessageDTO, error) {
 	return result, nil
 }
 
-// DTO для транспорта
 type MessageDTO struct {
 	Nick    string
 	Content string

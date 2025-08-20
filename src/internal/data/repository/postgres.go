@@ -124,7 +124,6 @@ func (r *PostgresRepo) GetLastMessages(limit int) ([]model.Message, error) {
 		messages = append(messages, msg)
 	}
 
-	// переворачиваем, чтобы шли в хронологическом порядке
 	for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
 		messages[i], messages[j] = messages[j], messages[i]
 	}
